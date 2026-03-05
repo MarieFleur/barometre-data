@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Baromètre Data</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:       #0f172a;
+      --surface:  #1e293b;
+      --s2:       #2d3f55;
+      --primary:  #6366f1;
+      --text:     #e2e8f0;
+      --muted:    #94a3b8;
+      --border:   rgba(255,255,255,0.08);
+      --survie:   #ef4444;
+      --pompier:  #f59e0b;
+      --pilotage: #10b981;
+      --radius:   16px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 20px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .logo {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--primary), #818cf8);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    h1 { font-size: 1.4rem; font-weight: 700; }
+    .admin-tag {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* Live indicator */
+    .live {
+      display: flex; align-items: center; gap: 8px;
+      font-size: .85rem; color: var(--muted);
+    }
+    .live-dot {
+      width: 8px; height: 8px;
+      background: var(--pilotage); border-radius: 50%;
+      animation: blink 2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+    }
+    .stat-label { font-size: .78rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+    .stat-value { font-size: 2.4rem; font-weight: 900; line-height: 1; }
+    .stat-sub   { font-size: .82rem; color: var(--muted); margin-top: 4px; }
+
+    /* Chart card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+    .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 20px; }
+    .chart-wrap { position: relative; height: 260px; }
+
+    /* Profiles */
+    .profiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+    .profile-card {
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+    }
+    .profile-count { font-size: 2.6rem; font-weight: 900; line-height: 1; margin-bottom: 6px; }
+    .profile-name  { font-size: .85rem; font-weight: 600; margin-bottom: 2px; }
+    .profile-pct   { font-size: .78rem; opacity: .7; }
+
+    /* Reset button */
+    .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .btn-reset {
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+    }
+    .btn-reset:hover { background: #dc2626; transform: translateY(-1px); }
+    .btn-reset:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .toast {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: var(--s2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: .88rem;
+      color: var(--muted);
+    }
+    .toast.show { display: flex; }
+
+    /* Scores list */
+    .scores-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .score-chip {
+      background: var(--s2);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: .85rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 560px) {
+      .profiles { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">📊</div>
+    <div>
+      <div class="admin-tag">Administration</div>
+      <h1>Baromètre de Maturité Data</h1>
+    </div>
+  </div>
+  <div class="live">
+    <div class="live-dot"></div>
+    Mise à jour en direct
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="grid">
+  <div class="stat-card">
+    <div class="stat-label">Participants</div>
+    <div class="stat-value" id="kpi-total">—</div>
+    <div class="stat-sub">réponses reçues</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Score moyen</div>
+    <div class="stat-value" id="kpi-avg">—</div>
+    <div class="stat-sub">points / 15</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Score médian</div>
+    <div class="stat-value" id="kpi-median">—</div>
+    <div class="stat-sub">points / 15</div>
+  </div>
+</div>
+
+<!-- Profils -->
+<div class="profiles">
+  <div class="profile-card" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3)">
+    <div class="profile-count" id="cnt-survie"   style="color:var(--survie)">0</div>
+    <div class="profile-name"  style="color:var(--survie)">Mode Survie</div>
+    <div class="profile-pct"   id="pct-survie">5 – 8 pts</div>
+  </div>
+  <div class="profile-card" style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3)">
+    <div class="profile-count" id="cnt-pompier"  style="color:var(--pompier)">0</div>
+    <div class="profile-name"  style="color:var(--pompier)">Mode Pompier</div>
+    <div class="profile-pct"   id="pct-pompier">9 – 12 pts</div>
+  </div>
+  <div class="profile-card" style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3)">
+    <div class="profile-count" id="cnt-pilotage" style="color:var(--pilotage)">0</div>
+    <div class="profile-name"  style="color:var(--pilotage)">Mode Pilotage</div>
+    <div class="profile-pct"   id="pct-pilotage">13 – 15 pts</div>
+  </div>
+</div>
+
+<!-- Histogramme -->
+<div class="card">
+  <div class="card-title">Distribution des scores</div>
+  <div class="chart-wrap">
+    <canvas id="chart"></canvas>
+  </div>
+</div>
+
+<!-- Actions -->
+<div class="card">
+  <div class="card-title">Actions</div>
+  <div class="actions">
+    <button class="btn-reset" id="btn-reset" onclick="resetData()">
+      🔄 Remettre à zéro
+    </button>
+    <div class="toast" id="toast">✅ Données réinitialisées avec succès.</div>
+  </div>
+</div>
+
+<script>
+let chart = null;
+let allScores = [];
+
+/* ── Chart ───────────────────────────────── */
+function barColor(score) {
+  if (score <= 8)  return 'rgba(239,68,68,0.75)';
+  if (score <= 12) return 'rgba(245,158,11,0.75)';
+  return 'rgba(16,185,129,0.75)';
+}
+
+function initChart() {
+  const ctx = document.getElementById('chart').getContext('2d');
+  const labels = Array.from({length: 11}, (_, i) => String(i + 5));
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: new Array(11).fill(0),
+        backgroundColor: labels.map(l => barColor(+l)),
+        borderRadius: 6,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: i => `Score ${i[0].label}`,
+            label: i => `${i.raw} participant${i.raw !== 1 ? 's' : ''}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid:  { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#94a3b8' },
+          title: { display: true, text: 'Score / 15', color: '#64748b', font: { size: 11 } },
+        },
+        y: {
+          grid:  { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#94a3b8', stepSize: 1, precision: 0 },
+          beginAtZero: true,
+          title: { display: true, text: 'Participants', color: '#64748b', font: { size: 11 } },
+        },
+      },
+    },
+  });
+}
+
+/* ── Update UI ───────────────────────────── */
+function median(arr) {
+  if (!arr.length) return null;
+  const s = [...arr].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : ((s[m - 1] + s[m]) / 2).toFixed(1);
+}
+
+function updateUI(stats) {
+  document.getElementById('kpi-total').textContent  = stats.total || '—';
+  document.getElementById('kpi-avg').textContent    = stats.average ?? '—';
+
+  // Reconstituer la liste des scores pour la médiane
+  allScores = [];
+  for (let i = 5; i <= 15; i++) {
+    for (let j = 0; j < (stats.distribution[i] || 0); j++) allScores.push(i);
+  }
+  document.getElementById('kpi-median').textContent = median(allScores) ?? '—';
+
+  const total = stats.total || 0;
+  document.getElementById('cnt-survie').textContent   = stats.profiles.survie;
+  document.getElementById('cnt-pompier').textContent  = stats.profiles.pompier;
+  document.getElementById('cnt-pilotage').textContent = stats.profiles.pilotage;
+
+  const pct = n => total ? `${Math.round(n / total * 100)} %` : '—';
+  document.getElementById('pct-survie').textContent   = `${pct(stats.profiles.survie)}  ·  5 – 8 pts`;
+  document.getElementById('pct-pompier').textContent  = `${pct(stats.profiles.pompier)}  ·  9 – 12 pts`;
+  document.getElementById('pct-pilotage').textContent = `${pct(stats.profiles.pilotage)}  ·  13 – 15 pts`;
+
+  if (chart) {
+    chart.data.datasets[0].data = Array.from({length: 11}, (_, i) => stats.distribution[i + 5] || 0);
+    chart.update('active');
+  }
+}
+
+/* ── Reset ───────────────────────────────── */
+async function resetData() {
+  const btn = document.getElementById('btn-reset');
+  if (!confirm('Remettre toutes les réponses à zéro ?')) return;
+
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    await fetch('/reset', { method: 'POST' });
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  } catch (e) {
+    alert('Erreur lors de la remise à zéro.');
+  }
+  btn.disabled = false;
+  btn.textContent = '🔄 Remettre à zéro';
+}
+
+/* ── SSE ─────────────────────────────────── */
+function connect() {
+  const sse = new EventSource('/events');
+  sse.onmessage = e => { try { updateUI(JSON.parse(e.data)); } catch (_) {} };
+  sse.onerror   = () => setTimeout(connect, 3000);
+}
+
+/* ── Init ────────────────────────────────── */
+initChart();
+fetch('/stats').then(r => r.json()).then(updateUI);
+connect();
+</script>
+</body>
+</html>

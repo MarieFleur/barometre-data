@@ -1,0 +1,12 @@
+{
+  "name": "barometre-data",
+  "version": "1.0.0",
+  "description": "Baromètre de Maturité Data - Sondage temps réel",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

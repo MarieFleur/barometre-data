@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Baromètre de Maturité Data</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:          #0f172a;
+      --surface:     #1e293b;
+      --surface-2:   #2d3f55;
+      --primary:     #6366f1;
+      --primary-dim: rgba(99,102,241,0.18);
+      --text:        #e2e8f0;
+      --muted:       #94a3b8;
+      --border:      rgba(255,255,255,0.08);
+      --radius:      18px;
+      --survie:      #ef4444;
+      --pompier:     #f59e0b;
+      --pilotage:    #10b981;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 16px 48px;
+    }
+
+    #app { width: 100%; max-width: 660px; }
+
+    /* ── Screens ─────────────────────────────── */
+    .screen { display: none; }
+    .screen.active {
+      display: block;
+      animation: fadeUp .35s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ── Card ────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Welcome ─────────────────────────────── */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+    .brand-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, var(--primary), #818cf8);
+      border-radius: 13px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .brand-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 14px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.65;
+      margin-bottom: 28px;
+    }
+
+    .info-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--primary-dim);
+      border: 1px solid rgba(99,102,241,.3);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 28px;
+      font-size: .9rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── Buttons ─────────────────────────────── */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 15px 28px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .15s, box-shadow .2s;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #4f46e5;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(99,102,241,.4);
+    }
+    .btn-primary:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 13px 20px;
+      border-radius: 12px;
+      font-size: .95rem;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+    /* ── Progress ────────────────────────────── */
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .progress-label { font-size: .85rem; color: var(--muted); font-weight: 500; }
+    .progress-bar {
+      height: 5px;
+      background: var(--surface-2);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), #a5b4fc);
+      border-radius: 99px;
+      transition: width .4s ease;
+    }
+
+    /* ── Question ────────────────────────────── */
+    .q-tag {
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .q-text {
+      font-size: 1.3rem;
+      font-weight: 700;
+      line-height: 1.45;
+      margin-bottom: 28px;
+    }
+
+    /* ── Options ─────────────────────────────── */
+    .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 18px;
+      background: var(--surface-2);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: border-color .18s, background .18s;
+    }
+    .option:hover { border-color: var(--primary); background: rgba(99,102,241,.1); }
+    .option.selected {
+      border-color: var(--primary);
+      background: rgba(99,102,241,.14);
+    }
+
+    .opt-radio {
+      width: 20px; height: 20px; min-width: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--muted);
+      background: var(--surface);
+      margin-top: 1px;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .18s, background .18s;
+    }
+    .option.selected .opt-radio {
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+    .opt-radio::after {
+      content: '';
+      display: none;
+      width: 7px; height: 7px;
+      background: #fff;
+      border-radius: 50%;
+    }
+    .option.selected .opt-radio::after { display: block; }
+
+    .opt-text { font-size: .97rem; line-height: 1.55; color: var(--text); }
+
+    .btn-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* ── Results ─────────────────────────────── */
+    .score-hero {
+      text-align: center;
+      padding: 36px 0 28px;
+    }
+    .score-big {
+      font-size: 5.5rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .score-denom { font-size: 2.2rem; color: var(--muted); font-weight: 400; }
+    .score-sub   { font-size: .95rem; color: var(--muted); margin-top: 6px; }
+
+    .profile-card {
+      border-radius: 14px;
+      padding: 26px;
+      margin-bottom: 0;
+    }
+    .profile-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .profile-subtitle {
+      font-size: 1rem;
+      opacity: .75;
+      margin-bottom: 14px;
+    }
+    .profile-desc {
+      font-size: .95rem;
+      line-height: 1.65;
+      color: var(--text);
+      opacity: .92;
+    }
+    .next-step-box {
+      background: rgba(0,0,0,.2);
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .next-step-tag {
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      opacity: .6;
+      margin-bottom: 6px;
+    }
+    .next-step-text { font-size: .9rem; line-height: 1.6; opacity: .9; }
+
+    /* ── Live section ────────────────────────── */
+    .live-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .live-dot {
+      width: 9px; height: 9px;
+      background: var(--pilotage);
+      border-radius: 50%;
+      animation: blink 2s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .3; }
+    }
+    .live-title { font-size: 1rem; font-weight: 700; }
+    .live-count { margin-left: auto; font-size: .85rem; color: var(--muted); }
+
+    /* ── Percentile ──────────────────────────── */
+    .percentile-block {
+      background: var(--surface-2);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 22px;
+    }
+    .percentile-num {
+      font-size: 2.8rem;
+      font-weight: 900;
+      color: var(--primary);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .percentile-label { font-size: .88rem; color: var(--muted); line-height: 1.5; }
+
+    /* ── Chart ───────────────────────────────── */
+    .chart-wrap { position: relative; height: 210px; margin-bottom: 20px; }
+
+    .chart-legend {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .8rem;
+      color: var(--muted);
+    }
+    .legend-dot {
+      width: 11px; height: 11px;
+      border-radius: 3px;
+    }
+
+    /* ── Profile distribution ────────────────── */
+    .profile-dist {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .dist-card {
+      background: var(--surface-2);
+      border-radius: 11px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .dist-count {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+    .dist-label { font-size: .73rem; color: var(--muted); }
+
+    /* ── User score marker ───────────────────── */
+    .my-score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary-dim);
+      border: 1px solid rgba(99,102,241,.4);
+      border-radius: 99px;
+      padding: 5px 14px;
+      font-size: .82rem;
+      color: #a5b4fc;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .card { padding: 22px 18px; }
+      h1    { font-size: 1.65rem; }
+      .q-text { font-size: 1.1rem; }
+      .score-big { font-size: 4rem; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══ ÉCRAN D'ACCUEIL ═══════════════════════════════ -->
+  <div id="screen-welcome" class="screen active">
+    <div class="card">
+      <div class="brand">
+        <div class="brand-icon">📊</div>
+        <div class="brand-label">Maturité Data</div>
+      </div>
+
+      <h1>Baromètre de<br>Maturité Data</h1>
+      <p class="subtitle">
+        5 questions pour situer votre organisation.
+        Comparez-vous en direct avec les autres participants.
+      </p>
+
+      <div class="info-banner">
+        ⏱&nbsp; 2 minutes · Résultats en temps réel · Anonyme
+      </div>
+
+      <button class="btn-primary" onclick="startQuiz()">
+        Commencer &nbsp;→
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ ÉCRAN QUESTIONS ═══════════════════════════════ -->
+  <div id="screen-questions" class="screen">
+    <div class="card">
+      <div class="progress-header">
+        <span class="progress-label" id="prog-label">Question 1 sur 5</span>
+        <span class="progress-label" id="prog-score"></span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+      </div>
+
+      <div id="q-tag" class="q-tag">Question 1</div>
+      <div id="q-text" class="q-text"></div>
+      <div id="options" class="options"></div>
+
+      <div class="btn-row">
+        <button class="btn-ghost" id="btn-back" onclick="prevQ()" style="visibility:hidden">← Retour</button>
+        <button class="btn-primary" id="btn-next" onclick="nextQ()" disabled>
+          <span id="btn-next-label">Suivant</span> →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ÉCRAN RÉSULTATS ═══════════════════════════════ -->
+  <div id="screen-results" class="screen">
+
+    <!-- Score + profil -->
+    <div class="card">
+      <div class="score-hero">
+        <div class="score-big">
+          <span id="score-val">0</span><span class="score-denom">&thinsp;/15</span>
+        </div>
+        <div class="score-sub">points</div>
+      </div>
+
+      <div id="profile-card" class="profile-card">
+        <div id="profile-title"   class="profile-title"></div>
+        <div id="profile-subtitle" class="profile-subtitle"></div>
+        <div id="profile-desc"    class="profile-desc"></div>
+        <div class="next-step-box">
+          <div class="next-step-tag">Par où commencer</div>
+          <div id="profile-next" class="next-step-text"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live stats -->
+    <div class="card">
+      <div class="live-header">
+        <div class="live-dot"></div>
+        <span class="live-title">Positionnement en direct</span>
+        <span class="live-count"><span id="nb-participants">0</span> participants</span>
+      </div>
+
+      <!-- Percentile -->
+      <div class="percentile-block">
+        <div class="percentile-num"  id="percentile-val">—</div>
+        <div class="percentile-label" id="percentile-txt">En attente d'autres participants…</div>
+      </div>
+
+      <!-- Mon badge -->
+      <div style="text-align:center;margin-bottom:6px;">
+        <span class="my-score-badge">● Votre score : <span id="badge-score">0</span></span>
+      </div>
+
+      <!-- Histogram -->
+      <div class="chart-wrap">
+        <canvas id="chart"></canvas>
+      </div>
+
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--survie)"></div>Mode Survie (5–8)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--pompier)"></div>Mode Pompier (9–12)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--pilotage)"></div>Mode Pilotage (13–15)</div>
+      </div>
+
+      <!-- Distribution par profil -->
+      <div class="profile-dist">
+        <div class="dist-card">
+          <div class="dist-count" id="cnt-survie"   style="color:var(--survie)">0</div>
+          <div class="dist-label">Mode Survie</div>
+        </div>
+        <div class="dist-card">
+          <div class="dist-count" id="cnt-pompier"  style="color:var(--pompier)">0</div>
+          <div class="dist-label">Mode Pompier</div>
+        </div>
+        <div class="dist-card">
+          <div class="dist-count" id="cnt-pilotage" style="color:var(--pilotage)">0</div>
+          <div class="dist-label">Mode Pilotage</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /screen-results -->
+</div><!-- /app -->
+
+<script>
+/* ══════════════════════════════════════════════
+   DONNÉES DU QUESTIONNAIRE
+══════════════════════════════════════════════ */
+const QUESTIONS = [
+  {
+    text: "Vous devez prendre une décision importante. Que faites-vous ?",
+    options: [
+      { pts: 1, text: "Je refais mes propres calculs. Je ne me fie pas aux chiffres qu'on me donne." },
+      { pts: 2, text: "Je consulte les chiffres disponibles, mais je sais qu'il faudra les vérifier." },
+      { pts: 3, text: "Je consulte le tableau de bord et je décide. Les chiffres reflètent la réalité." },
+    ],
+  },
+  {
+    text: "Vous découvrez une erreur dans les données. Que se passe-t-il ?",
+    options: [
+      { pts: 1, text: "Je corrige dans mon fichier. Personne ne sait vraiment à qui signaler le problème." },
+      { pts: 2, text: "J'envoie un mail à l'informatique. C'est eux qui gèrent les données." },
+      { pts: 3, text: "Je sais qui contacter côté métier. La correction est faite à la source pour tout le monde." },
+    ],
+  },
+  {
+    text: "Vous cherchez une information sur un client ou un produit. Comment ça se passe ?",
+    options: [
+      { pts: 1, text: "Je demande à un collègue ou je fouille dans plusieurs fichiers. Chaque service a ses propres infos." },
+      { pts: 2, text: "Je trouve l'info, mais parfois elle diffère selon les sources. Je ne sais pas laquelle est la bonne." },
+      { pts: 3, text: "Je sais où chercher. L'information est à jour et c'est la même pour tout le monde." },
+    ],
+  },
+  {
+    text: "Comment sont mises à jour vos données importantes (stocks, clients, tarifs…) ?",
+    options: [
+      { pts: 1, text: "Quand on y pense, ou quand on découvre que c'est faux. Certaines infos datent de plusieurs années." },
+      { pts: 2, text: "On fait des campagnes de \"nettoyage\" de temps en temps, quand ça devient vraiment problématique." },
+      { pts: 3, text: "Il y a un processus régulier. On sait qui met à jour quoi, et à quelle fréquence." },
+    ],
+  },
+  {
+    text: "Vous avez besoin d'un nouveau rapport ou d'une nouvelle donnée. Comment ça se passe ?",
+    options: [
+      { pts: 1, text: "Je me débrouille seul avec Excel. Demander prend trop de temps ou personne ne comprend mon besoin." },
+      { pts: 2, text: "Je fais une demande, mais c'est long et le résultat ne correspond pas toujours à ce que je voulais." },
+      { pts: 3, text: "J'exprime mon besoin métier, on travaille ensemble pour y répondre. Chacun apporte son expertise." },
+    ],
+  },
+];
+
+const PROFILES = {
+  survie: {
+    label:    "Mode Survie",
+    subtitle: '"Je me débrouille"',
+    bg:       "rgba(239,68,68,.15)",
+    border:   "#ef4444",
+    color:    "#ef4444",
+    desc:     "Vous passez du temps à chercher, vérifier, recopier. Chacun a ses propres fichiers. Quand il y a une erreur, on ne sait pas trop qui doit la corriger.",
+    next:     "Identifiez une donnée qui vous fait perdre du temps chaque semaine. Proposez à votre équipe de clarifier : « C'est quoi la bonne source ? Qui la tient à jour ? »",
+  },
+  pompier: {
+    label:    "Mode Pompier",
+    subtitle: '"On fait avec"',
+    bg:       "rgba(245,158,11,.15)",
+    border:   "#f59e0b",
+    color:    "#f59e0b",
+    desc:     "Des outils existent, mais vous corrigez souvent les problèmes après coup. Quand vous avez besoin d'aide, vous ne savez pas toujours à qui vous adresser.",
+    next:     "Clarifiez qui est responsable de quoi. Pour vos données critiques, identifiez un « propriétaire » côté métier qui garantit la qualité, et un interlocuteur technique qui garantit l'accès.",
+  },
+  pilotage: {
+    label:    "Mode Pilotage",
+    subtitle: '"On pilote"',
+    bg:       "rgba(16,185,129,.15)",
+    border:   "#10b981",
+    color:    "#10b981",
+    desc:     "Vos données sont fiables et accessibles. Vous savez qui contacter. Métier et technique travaillent main dans la main.",
+    next:     "Traitez vos données comme un produit : avec un cycle de vie (création, mise à jour, archivage), des « clients » internes qui l'utilisent, et des engagements de qualité.",
+  },
+};
+
+/* ══════════════════════════════════════════════
+   ÉTAT
+══════════════════════════════════════════════ */
+let currentQ  = 0;
+let answers   = new Array(QUESTIONS.length).fill(null);
+let userScore = null;
+let chart     = null;
+let sse       = null;
+
+/* ══════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startQuiz() {
+  currentQ = 0;
+  answers  = new Array(QUESTIONS.length).fill(null);
+  renderQ();
+  showScreen('screen-questions');
+}
+
+function renderQ() {
+  const n  = currentQ + 1;
+  const N  = QUESTIONS.length;
+  const q  = QUESTIONS[currentQ];
+  const pts = answers.reduce((s, a) => s + (a ?? 0), 0);
+
+  document.getElementById('prog-label').textContent = `Question ${n} sur ${N}`;
+  document.getElementById('prog-score').textContent  = pts > 0 ? `${pts} pt${pts > 1 ? 's' : ''}` : '';
+  document.getElementById('prog-fill').style.width   = `${((n - 1) / N) * 100}%`;
+  document.getElementById('q-tag').textContent  = `Question ${n}`;
+  document.getElementById('q-text').textContent = q.text;
+
+  const optEl = document.getElementById('options');
+  optEl.innerHTML = '';
+  q.options.forEach(opt => {
+    const div = document.createElement('div');
+    div.className = 'option' + (answers[currentQ] === opt.pts ? ' selected' : '');
+    div.innerHTML = `<div class="opt-radio"></div><div class="opt-text">${opt.text}</div>`;
+    div.addEventListener('click', () => selectOpt(opt.pts, div));
+    optEl.appendChild(div);
+  });
+
+  const hasAns = answers[currentQ] !== null;
+  document.getElementById('btn-next').disabled        = !hasAns;
+  document.getElementById('btn-next-label').textContent = currentQ === N - 1 ? 'Voir mes résultats' : 'Suivant';
+  document.getElementById('btn-back').style.visibility  = currentQ === 0 ? 'hidden' : 'visible';
+}
+
+function selectOpt(pts, el) {
+  answers[currentQ] = pts;
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('btn-next').disabled = false;
+}
+
+function prevQ() {
+  if (currentQ > 0) { currentQ--; renderQ(); }
+}
+
+function nextQ() {
+  if (answers[currentQ] === null) return;
+  if (currentQ < QUESTIONS.length - 1) { currentQ++; renderQ(); }
+  else submitQuiz();
+}
+
+/* ══════════════════════════════════════════════
+   SOUMISSION
+══════════════════════════════════════════════ */
+async function submitQuiz() {
+  const score = answers.reduce((s, a) => s + a, 0);
+  userScore = score;
+
+  let stats = null;
+  try {
+    const res  = await fetch('/submit', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ score }),
+    });
+    if (res.status === 429) {
+      // Déjà soumis — on affiche quand même les résultats en lecture seule
+      const data = await res.json();
+      console.warn(data.error);
+    } else {
+      const data = await res.json();
+      stats = data.stats;
+    }
+  } catch (e) { console.error('Submit error', e); }
+
+  showResults(score, stats);
+}
+
+/* ══════════════════════════════════════════════
+   RÉSULTATS
+══════════════════════════════════════════════ */
+function getProfile(score) {
+  if (score <= 8)  return PROFILES.survie;
+  if (score <= 12) return PROFILES.pompier;
+  return PROFILES.pilotage;
+}
+
+function showResults(score, stats) {
+  animateScore(score);
+  document.getElementById('badge-score').textContent = score;
+
+  const p = getProfile(score);
+  const card = document.getElementById('profile-card');
+  card.style.background   = p.bg;
+  card.style.border       = `1px solid ${p.border}`;
+
+  const title = document.getElementById('profile-title');
+  title.textContent  = p.label;
+  title.style.color  = p.color;
+
+  const sub = document.getElementById('profile-subtitle');
+  sub.textContent = p.subtitle;
+  sub.style.color = p.color;
+
+  document.getElementById('profile-desc').textContent = p.desc;
+  document.getElementById('profile-next').textContent = p.next;
+
+  showScreen('screen-results');
+  initChart();
+  if (stats) updateStats(stats);
+  connectSSE();
+}
+
+function animateScore(target) {
+  const el = document.getElementById('score-val');
+  let cur = 0;
+  const step = target / 25;
+  const iv = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = Math.round(cur);
+    if (cur >= target) clearInterval(iv);
+  }, 40);
+}
+
+/* ══════════════════════════════════════════════
+   CHART
+══════════════════════════════════════════════ */
+function barColor(score, alpha) {
+  if (score <= 8)  return `rgba(239,68,68,${alpha})`;
+  if (score <= 12) return `rgba(245,158,11,${alpha})`;
+  return `rgba(16,185,129,${alpha})`;
+}
+
+// Plugin Chart.js : étiquette "▼ Vous" au-dessus de la barre de l'utilisateur
+const youLabelPlugin = {
+  id: 'youLabel',
+  afterDatasetsDraw(chart) {
+    const { ctx, scales: { x, y } } = chart;
+    const meta = chart.getDatasetMeta(0);
+    const idx = userScore - 5; // score 5 → index 0, score 8 → index 3, etc.
+    const bar = meta.data[idx];
+    if (!bar) return;
+
+    const count = chart.data.datasets[0].data[idx] || 0;
+    // Si la barre a une hauteur > 0, on place le label au-dessus ; sinon, au niveau de l'axe X
+    const yPos = count > 0 ? bar.y - 10 : y.getPixelForValue(0) - 10;
+
+    ctx.save();
+    ctx.font = 'bold 12px Segoe UI, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('▼ Vous', bar.x, yPos);
+    ctx.restore();
+  },
+};
+
+function initChart() {
+  if (chart) { chart.destroy(); chart = null; }
+  const ctx = document.getElementById('chart').getContext('2d');
+
+  const labels = [], data = [], bg = [], border = [];
+  for (let i = 5; i <= 15; i++) {
+    labels.push(String(i));
+    data.push(0);
+    bg.push(barColor(i, i === userScore ? 1 : 0.55));
+    border.push(i === userScore ? '#ffffff' : 'transparent');
+  }
+
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data, backgroundColor: bg, borderColor: border,
+        borderWidth: 2.5, borderRadius: 6,
+      }],
+    },
+    plugins: [youLabelPlugin],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: items => `Score ${items[0].label}`,
+            label: item  => `${item.raw} participant${item.raw !== 1 ? 's' : ''}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid:  { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#94a3b8', font: { size: 11 } },
+          title: { display: true, text: 'Score / 15', color: '#64748b', font: { size: 11 } },
+        },
+        y: {
+          grid:  { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#94a3b8', font: { size: 11 }, stepSize: 1, precision: 0 },
+          beginAtZero: true,
+          title: { display: true, text: 'Participants', color: '#64748b', font: { size: 11 } },
+        },
+      },
+    },
+  });
+}
+
+/* ══════════════════════════════════════════════
+   MISE À JOUR DES STATS LIVE
+══════════════════════════════════════════════ */
+function updateStats(stats) {
+  document.getElementById('nb-participants').textContent = stats.total;
+  document.getElementById('cnt-survie').textContent      = stats.profiles.survie;
+  document.getElementById('cnt-pompier').textContent     = stats.profiles.pompier;
+  document.getElementById('cnt-pilotage').textContent    = stats.profiles.pilotage;
+
+  // Percentile
+  if (stats.total > 1) {
+    let below = 0;
+    for (let i = 5; i < userScore; i++) below += (stats.distribution[i] || 0);
+    const pct = Math.round((below / stats.total) * 100);
+    document.getElementById('percentile-val').textContent = `${pct}%`;
+    document.getElementById('percentile-txt').textContent =
+      `des ${stats.total} participants ont un score inférieur au vôtre`;
+  } else {
+    document.getElementById('percentile-val').textContent = '1er !';
+    document.getElementById('percentile-txt').textContent = 'Vous êtes le premier à répondre !';
+  }
+
+  // Chart
+  if (chart) {
+    const newData = [], newBg = [], newBorder = [];
+    for (let i = 5; i <= 15; i++) {
+      newData.push(stats.distribution[i] || 0);
+      newBg.push(barColor(i, i === userScore ? 1 : 0.55));
+      newBorder.push(i === userScore ? '#ffffff' : 'transparent');
+    }
+    chart.data.datasets[0].data            = newData;
+    chart.data.datasets[0].backgroundColor = newBg;
+    chart.data.datasets[0].borderColor     = newBorder;
+    chart.update('active');
+  }
+}
+
+/* ══════════════════════════════════════════════
+   SERVER-SENT EVENTS
+══════════════════════════════════════════════ */
+function connectSSE() {
+  if (sse) sse.close();
+  sse = new EventSource('/events');
+  sse.onmessage = e => {
+    try { updateStats(JSON.parse(e.data)); } catch (_) {}
+  };
+  sse.onerror = () => console.log('SSE: reconnexion…');
+}
+
+window.addEventListener('beforeunload', () => { if (sse) sse.close(); });
+</script>
+</body>
+</html>
