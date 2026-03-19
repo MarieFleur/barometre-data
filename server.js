@@ -7,10 +7,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // In-memory store (scores des participants)
 const scores = [];
-const clients = new Set();
-
-// Une soumission par IP
-const submittedIPs = new Set();
+const clients = new Set()
 
 function getStats() {
   const total = scores.length;
@@ -60,11 +57,6 @@ app.get('/events', (req, res) => {
 
 // Soumission d'un score
 app.post('/submit', (req, res) => {
-  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
-
-  if (submittedIPs.has(ip)) {
-    return res.status(429).json({ error: 'Vous avez déjà soumis votre réponse.' });
-  }
 
   const score = parseInt(req.body.score, 10);
 
@@ -72,7 +64,6 @@ app.post('/submit', (req, res) => {
     return res.status(400).json({ error: 'Score invalide (doit être entre 5 et 15)' });
   }
 
-  submittedIPs.add(ip);
   scores.push(score);
   const stats = getStats();
   broadcast(stats);
@@ -94,7 +85,6 @@ app.get('/admin-adn-1234', (req, res) => {
 // Remise à zéro (organisateur)
 app.post('/reset', (req, res) => {
   scores.length = 0;
-  submittedIPs.clear();
   const stats = getStats();
   broadcast(stats);
   console.log('🔄 Remise à zéro effectuée');

@@ -65,11 +65,11 @@
     }
     .brand-icon {
       width: 48px; height: 48px;
-      background: linear-gradient(135deg, var(--primary), #818cf8);
       border-radius: 13px;
+      overflow: hidden;
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
     }
+    .brand-icon img { width: 100%; height: 100%; object-fit: contain; }
     .brand-label {
       font-size: 12px;
       text-transform: uppercase;
@@ -391,7 +391,7 @@
   <div id="screen-welcome" class="screen active">
     <div class="card">
       <div class="brand">
-        <div class="brand-icon">📊</div>
+        <div class="brand-icon"><img src="/logo.png" alt="Logo" /></div>
         <div class="brand-label">Maturité Data</div>
       </div>
 
@@ -440,6 +440,9 @@
 
     <!-- Score + profil -->
     <div class="card">
+      <div style="text-align:center;margin-bottom:8px;">
+        <img src="/logo.png" alt="Logo" style="height:48px;object-fit:contain;" />
+      </div>
       <div class="score-hero">
         <div class="score-big">
           <span id="score-val">0</span><span class="score-denom">&thinsp;/15</span>
