@@ -713,7 +713,7 @@ async function submitQuiz() {
     const res  = await fetch('/submit', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ score, company: userCompany }),
+      body:    JSON.stringify({ score, company: userCompany, answers }),
     });
     if (res.status === 429) {
       // Déjà soumis — on affiche quand même les résultats en lecture seule

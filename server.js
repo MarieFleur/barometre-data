@@ -100,8 +100,16 @@ app.post('/submit', (req, res) => {
     ? req.body.company.trim().slice(0, 100)
     : '';
 
+  // Récupérer les réponses par question (tableau de pts)
+  const answers = Array.isArray(req.body.answers)
+    ? req.body.answers.slice(0, 5).map(a => {
+        const n = parseInt(a, 10);
+        return (n >= 1 && n <= 3) ? n : null;
+      })
+    : [];
+
   scores.push(score);
-  submissions.push({ score, company, timestamp: Date.now() });
+  submissions.push({ score, company, answers, timestamp: Date.now() });
   addScoreToCache(score);
 
   const stats = getStats();
@@ -123,11 +131,12 @@ app.get('/admin-adn-1234', (req, res) => {
 
 // ── Export CSV des soumissions ────────────────────────────
 app.get('/export-csv', (req, res) => {
-  const header = 'score,company,timestamp,date';
+  const header = 'score,q1,q2,q3,q4,q5,company,timestamp,date';
   const rows = submissions.map(s => {
     const date = new Date(s.timestamp).toISOString();
     const company = (s.company || '').replace(/"/g, '""');
-    return `${s.score},"${company}",${s.timestamp},${date}`;
+    const a = s.answers || [];
+    return `${s.score},${a[0]?? ''},${a[1]?? ''},${a[2]?? ''},${a[3]?? ''},${a[4]?? ''},"${company}",${s.timestamp},${date}`;
   });
   const csv = [header, ...rows].join('\n');
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
