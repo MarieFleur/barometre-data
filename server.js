@@ -121,6 +121,20 @@ app.get('/admin-adn-1234', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
+// ── Export CSV des soumissions ────────────────────────────
+app.get('/export-csv', (req, res) => {
+  const header = 'score,company,timestamp,date';
+  const rows = submissions.map(s => {
+    const date = new Date(s.timestamp).toISOString();
+    const company = (s.company || '').replace(/"/g, '""');
+    return `${s.score},"${company}",${s.timestamp},${date}`;
+  });
+  const csv = [header, ...rows].join('\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="barometre-export.csv"');
+  res.send(csv);
+});
+
 // ── Remise à zéro (organisateur) ───────────────────────────
 app.post('/reset', (req, res) => {
   scores.length = 0;
