@@ -6,7 +6,8 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── In-memory store ────────────────────────────────────────
-const scores = [];
+const scores = [];      // tableau de nombres (rétrocompat stats)
+const submissions = []; // tableau complet { score, company, timestamp }
 const clients = new Set();
 
 // ── Stats cache incrémental ────────────────────────────────
@@ -95,7 +96,12 @@ app.post('/submit', (req, res) => {
     return res.status(400).json({ error: 'Score invalide (doit être entre 5 et 15)' });
   }
 
+  const company = typeof req.body.company === 'string'
+    ? req.body.company.trim().slice(0, 100)
+    : '';
+
   scores.push(score);
+  submissions.push({ score, company, timestamp: Date.now() });
   addScoreToCache(score);
 
   const stats = getStats();
@@ -118,6 +124,7 @@ app.get('/admin-adn-1234', (req, res) => {
 // ── Remise à zéro (organisateur) ───────────────────────────
 app.post('/reset', (req, res) => {
   scores.length = 0;
+  submissions.length = 0;
   resetCache();
   const stats = getStats();
 
