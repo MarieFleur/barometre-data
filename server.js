@@ -68,10 +68,6 @@ function scheduleBroadcast() {
   }, 200); // max 5 broadcasts/sec au lieu de 500
 }
 
-// ── Rate limiting par IP ───────────────────────────────────
-// 1 soumission par IP pour éviter les abus
-const submittedIPs = new Set();
-
 // ── Server-Sent Events — mise à jour en temps réel ─────────
 app.get('/events', (req, res) => {
   res.writeHead(200, {
@@ -93,19 +89,12 @@ app.get('/events', (req, res) => {
 
 // ── Soumission d'un score ──────────────────────────────────
 app.post('/submit', (req, res) => {
-  // Rate limiting : 1 soumission par IP
-  const ip = req.ip || req.connection.remoteAddress;
-  if (submittedIPs.has(ip)) {
-    return res.status(429).json({ error: 'Vous avez déjà répondu au questionnaire.' });
-  }
-
   const score = parseInt(req.body.score, 10);
 
   if (!Number.isInteger(score) || score < 5 || score > 15) {
     return res.status(400).json({ error: 'Score invalide (doit être entre 5 et 15)' });
   }
 
-  submittedIPs.add(ip);
   scores.push(score);
   addScoreToCache(score);
 
@@ -129,7 +118,6 @@ app.get('/admin-adn-1234', (req, res) => {
 // ── Remise à zéro (organisateur) ───────────────────────────
 app.post('/reset', (req, res) => {
   scores.length = 0;
-  submittedIPs.clear();
   resetCache();
   const stats = getStats();
 
