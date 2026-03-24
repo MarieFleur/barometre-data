@@ -5,38 +5,74 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// In-memory store (scores des participants)
+// ── In-memory store ────────────────────────────────────────
 const scores = [];
-const clients = new Set()
+const clients = new Set();
+
+// ── Stats cache incrémental ────────────────────────────────
+// Évite de recalculer en O(n) à chaque soumission
+let statsCache = null;
+let statsDirty = true;
+let scoreSum = 0;
+const distribution = {};
+for (let i = 5; i <= 15; i++) distribution[i] = 0;
+const profiles = { survie: 0, pompier: 0, pilotage: 0 };
+
+function addScoreToCache(score) {
+  distribution[score]++;
+  scoreSum += score;
+  if (score >= 5 && score <= 8)  profiles.survie++;
+  else if (score >= 9 && score <= 12) profiles.pompier++;
+  else if (score >= 13 && score <= 15) profiles.pilotage++;
+  statsDirty = true;
+}
+
+function resetCache() {
+  for (let i = 5; i <= 15; i++) distribution[i] = 0;
+  profiles.survie = 0;
+  profiles.pompier = 0;
+  profiles.pilotage = 0;
+  scoreSum = 0;
+  statsDirty = true;
+  statsCache = null;
+}
 
 function getStats() {
+  if (!statsDirty && statsCache) return statsCache;
+
   const total = scores.length;
+  const average = total > 0 ? (scoreSum / total).toFixed(1) : null;
 
-  const distribution = {};
-  for (let i = 5; i <= 15; i++) distribution[i] = 0;
-  scores.forEach(s => { if (distribution[s] !== undefined) distribution[s]++; });
-
-  const profiles = {
-    survie:   scores.filter(s => s >= 5  && s <= 8).length,
-    pompier:  scores.filter(s => s >= 9  && s <= 12).length,
-    pilotage: scores.filter(s => s >= 13 && s <= 15).length,
+  statsCache = {
+    total,
+    distribution: { ...distribution },
+    profiles: { ...profiles },
+    average,
   };
-
-  const average = total > 0
-    ? (scores.reduce((a, b) => a + b, 0) / total).toFixed(1)
-    : null;
-
-  return { total, distribution, profiles, average };
+  statsDirty = false;
+  return statsCache;
 }
 
-function broadcast(stats) {
-  const payload = `data: ${JSON.stringify(stats)}\n\n`;
-  clients.forEach(res => {
-    try { res.write(payload); } catch (e) { clients.delete(res); }
-  });
+// ── Broadcast avec debounce ────────────────────────────────
+// Regroupe les mises à jour pour éviter 500×500 écritures en burst
+let broadcastTimer = null;
+
+function scheduleBroadcast() {
+  if (broadcastTimer) return; // déjà planifié
+  broadcastTimer = setTimeout(() => {
+    broadcastTimer = null;
+    const payload = `data: ${JSON.stringify(getStats())}\n\n`;
+    clients.forEach(res => {
+      try { res.write(payload); } catch (e) { clients.delete(res); }
+    });
+  }, 200); // max 5 broadcasts/sec au lieu de 500
 }
 
-// Server-Sent Events — mise à jour en temps réel
+// ── Rate limiting par IP ───────────────────────────────────
+// 1 soumission par IP pour éviter les abus
+const submittedIPs = new Set();
+
+// ── Server-Sent Events — mise à jour en temps réel ─────────
 app.get('/events', (req, res) => {
   res.writeHead(200, {
     'Content-Type':  'text/event-stream',
@@ -55,8 +91,13 @@ app.get('/events', (req, res) => {
   req.on('close', () => { clearInterval(ping); clients.delete(res); });
 });
 
-// Soumission d'un score
+// ── Soumission d'un score ──────────────────────────────────
 app.post('/submit', (req, res) => {
+  // Rate limiting : 1 soumission par IP
+  const ip = req.ip || req.connection.remoteAddress;
+  if (submittedIPs.has(ip)) {
+    return res.status(429).json({ error: 'Vous avez déjà répondu au questionnaire.' });
+  }
 
   const score = parseInt(req.body.score, 10);
 
@@ -64,9 +105,12 @@ app.post('/submit', (req, res) => {
     return res.status(400).json({ error: 'Score invalide (doit être entre 5 et 15)' });
   }
 
+  submittedIPs.add(ip);
   scores.push(score);
+  addScoreToCache(score);
+
   const stats = getStats();
-  broadcast(stats);
+  scheduleBroadcast(); // debounced au lieu de broadcast immédiat
 
   const below = scores.filter(s => s < score).length;
   const percentile = Math.round((below / scores.length) * 100);
@@ -74,19 +118,27 @@ app.post('/submit', (req, res) => {
   res.json({ success: true, stats, percentile });
 });
 
-// Stats courantes
+// ── Stats courantes ────────────────────────────────────────
 app.get('/stats', (req, res) => res.json(getStats()));
 
-// Page d'administration (URL privée)
+// ── Page d'administration (URL privée) ─────────────────────
 app.get('/admin-adn-1234', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// Remise à zéro (organisateur)
+// ── Remise à zéro (organisateur) ───────────────────────────
 app.post('/reset', (req, res) => {
   scores.length = 0;
+  submittedIPs.clear();
+  resetCache();
   const stats = getStats();
-  broadcast(stats);
+
+  // Broadcast immédiat pour le reset (événement rare)
+  const payload = `data: ${JSON.stringify(stats)}\n\n`;
+  clients.forEach(r => {
+    try { r.write(payload); } catch (e) { clients.delete(r); }
+  });
+
   console.log('🔄 Remise à zéro effectuée');
   res.json({ success: true, message: 'Données réinitialisées.' });
 });

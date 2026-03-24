@@ -331,10 +331,20 @@ async function resetData() {
 }
 
 /* ── SSE ─────────────────────────────────── */
+let sseRetryDelay = 1000;
+
 function connect() {
   const sse = new EventSource('/events');
-  sse.onmessage = e => { try { updateUI(JSON.parse(e.data)); } catch (_) {} };
-  sse.onerror   = () => setTimeout(connect, 3000);
+  sse.onmessage = e => {
+    sseRetryDelay = 1000;
+    try { updateUI(JSON.parse(e.data)); } catch (_) {}
+  };
+  sse.onerror = () => {
+    sse.close();
+    console.log(`SSE: reconnexion dans ${sseRetryDelay / 1000}s…`);
+    setTimeout(connect, sseRetryDelay);
+    sseRetryDelay = Math.min(sseRetryDelay * 2, 30000);
+  };
 }
 
 /* ── Init ────────────────────────────────── */

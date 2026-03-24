@@ -854,13 +854,22 @@ function updateStats(stats) {
 /* ══════════════════════════════════════════════
    SERVER-SENT EVENTS
 ══════════════════════════════════════════════ */
+let sseRetryDelay = 1000;
+
 function connectSSE() {
   if (sse) sse.close();
   sse = new EventSource('/events');
   sse.onmessage = e => {
+    sseRetryDelay = 1000; // reset on success
     try { updateStats(JSON.parse(e.data)); } catch (_) {}
   };
-  sse.onerror = () => console.log('SSE: reconnexion…');
+  sse.onerror = () => {
+    sse.close();
+    sse = null;
+    console.log(`SSE: reconnexion dans ${sseRetryDelay / 1000}s…`);
+    setTimeout(connectSSE, sseRetryDelay);
+    sseRetryDelay = Math.min(sseRetryDelay * 2, 30000); // backoff exponentiel, max 30s
+  };
 }
 
 window.addEventListener('beforeunload', () => { if (sse) sse.close(); });
