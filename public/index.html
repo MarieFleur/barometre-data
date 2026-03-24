@@ -180,6 +180,23 @@
       margin-bottom: 28px;
     }
 
+    /* ── Text input ─────────────────────────── */
+    .input-text {
+      width: 100%;
+      padding: 14px 18px;
+      background: var(--surface-2);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s;
+      margin-bottom: 28px;
+    }
+    .input-text:focus { border-color: var(--primary); }
+    .input-text::placeholder { color: var(--muted); }
+
     /* ── Options ─────────────────────────────── */
     .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
 
@@ -405,9 +422,34 @@
         ⏱&nbsp; 2 minutes · Résultats en temps réel · Anonyme
       </div>
 
-      <button class="btn-primary" onclick="startQuiz()">
+      <button class="btn-primary" onclick="showScreen('screen-company')">
         Commencer &nbsp;→
       </button>
+    </div>
+  </div>
+
+  <!-- ═══ ÉCRAN ENTREPRISE ═════════════════════════════ -->
+  <div id="screen-company" class="screen">
+    <div class="card">
+      <div class="q-tag">Avant de commencer</div>
+      <div class="q-text">Quelle est votre entreprise ?</div>
+
+      <input
+        type="text"
+        id="input-company"
+        class="input-text"
+        placeholder="Nom de l'entreprise"
+        autocomplete="organization"
+        maxlength="100"
+        oninput="document.getElementById('btn-start-quiz').disabled = !this.value.trim()"
+      />
+
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="showScreen('screen-welcome')">← Retour</button>
+        <button class="btn-primary" id="btn-start-quiz" onclick="startQuiz()" disabled>
+          Suivant →
+        </button>
+      </div>
     </div>
   </div>
 
@@ -594,6 +636,7 @@ const PROFILES = {
 let currentQ  = 0;
 let answers   = new Array(QUESTIONS.length).fill(null);
 let userScore = null;
+let userCompany = '';
 let chart     = null;
 let sse       = null;
 
@@ -606,6 +649,7 @@ function showScreen(id) {
 }
 
 function startQuiz() {
+  userCompany = document.getElementById('input-company').value.trim();
   currentQ = 0;
   answers  = new Array(QUESTIONS.length).fill(null);
   renderQ();
@@ -669,7 +713,7 @@ async function submitQuiz() {
     const res  = await fetch('/submit', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ score }),
+      body:    JSON.stringify({ score, company: userCompany }),
     });
     if (res.status === 429) {
       // Déjà soumis — on affiche quand même les résultats en lecture seule
@@ -854,13 +898,22 @@ function updateStats(stats) {
 /* ══════════════════════════════════════════════
    SERVER-SENT EVENTS
 ══════════════════════════════════════════════ */
+let sseRetryDelay = 1000;
+
 function connectSSE() {
   if (sse) sse.close();
   sse = new EventSource('/events');
   sse.onmessage = e => {
+    sseRetryDelay = 1000; // reset on success
     try { updateStats(JSON.parse(e.data)); } catch (_) {}
   };
-  sse.onerror = () => console.log('SSE: reconnexion…');
+  sse.onerror = () => {
+    sse.close();
+    sse = null;
+    console.log(`SSE: reconnexion dans ${sseRetryDelay / 1000}s…`);
+    setTimeout(connectSSE, sseRetryDelay);
+    sseRetryDelay = Math.min(sseRetryDelay * 2, 30000); // backoff exponentiel, max 30s
+  };
 }
 
 window.addEventListener('beforeunload', () => { if (sse) sse.close(); });
