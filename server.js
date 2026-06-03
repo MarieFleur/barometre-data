@@ -126,6 +126,7 @@ function scoreRange() {
 // ── In-memory score store ────────────────────────────────────────────────────
 
 const scores = [];
+const submissions = []; // données complètes par soumission
 const clients = new Set();
 
 function getStats() {
@@ -150,7 +151,18 @@ function getStats() {
   return { total, distribution, profiles, average, scoreMin: min, scoreMax: max };
 }
 
+let broadcastTimer = null;
 function broadcast(stats) {
+  if (broadcastTimer) return;
+  broadcastTimer = setTimeout(() => {
+    broadcastTimer = null;
+    const payload = `data: ${JSON.stringify(stats)}\n\n`;
+    clients.forEach(res => {
+      try { res.write(payload); } catch (e) { clients.delete(res); }
+    });
+  }, 200);
+}
+function broadcastNow(stats) {
   const payload = `data: ${JSON.stringify(stats)}\n\n`;
   clients.forEach(res => {
     try { res.write(payload); } catch (e) { clients.delete(res); }
@@ -203,7 +215,11 @@ app.post('/submit', (req, res) => {
     return res.status(400).json({ error: `Score invalide (doit être entre ${min} et ${max})` });
   }
 
+  const company = typeof req.body.company === 'string' ? req.body.company.trim().slice(0, 100) : '';
+  const answers = Array.isArray(req.body.answers) ? req.body.answers.slice(0, 10).map(a => parseInt(a, 10) || null) : [];
+
   scores.push(score);
+  submissions.push({ score, company, answers, timestamp: Date.now() });
   const stats = getStats();
   broadcast(stats);
 
@@ -221,11 +237,29 @@ app.get('/admin-adn-1234', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
+// Export CSV
+app.get('/export-csv', (req, res) => {
+  const maxQ = config.questions.length;
+  const qHeaders = config.questions.map((q, i) => `q${i + 1}`).join(',');
+  const header = `score,${qHeaders},company,timestamp,date`;
+  const rows = submissions.map(s => {
+    const date = new Date(s.timestamp).toISOString();
+    const company = (s.company || '').replace(/"/g, '""');
+    const a = s.answers || [];
+    const qCols = Array.from({ length: maxQ }, (_, i) => a[i] ?? '').join(',');
+    return `${s.score},${qCols},"${company}",${s.timestamp},${date}`;
+  });
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="barometre-export.csv"');
+  res.send([header, ...rows].join('\n'));
+});
+
 // Reset
 app.post('/reset', (req, res) => {
   scores.length = 0;
+  submissions.length = 0;
   const stats = getStats();
-  broadcast(stats);
+  broadcastNow(stats);
   console.log('🔄 Remise à zéro effectuée');
   res.json({ success: true, message: 'Données réinitialisées.' });
 });
