@@ -1,0 +1,135 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "text": "Vous devez prendre une décision importante. Que faites-vous ?",
+      "options": [
+        {
+          "pts": 1,
+          "text": "Je refais mes propres calculs. Je ne me fie pas aux chiffres qu'on me donne."
+        },
+        {
+          "pts": 2,
+          "text": "Je consulte les chiffres disponibles, mais je sais qu'il faudra les vérifier."
+        },
+        {
+          "pts": 3,
+          "text": "Je consulte le tableau de bord et je décide. Les chiffres reflètent la réalité."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "text": "Vous découvrez une erreur dans les données. Que se passe-t-il ?",
+      "options": [
+        {
+          "pts": 1,
+          "text": "Je corrige dans mon fichier. Personne ne sait vraiment à qui signaler le problème."
+        },
+        {
+          "pts": 2,
+          "text": "J'envoie un mail à l'informatique. C'est eux qui gèrent les données."
+        },
+        {
+          "pts": 3,
+          "text": "Je sais qui contacter côté métier. La correction est faite à la source pour tout le monde."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "text": "Vous cherchez une information sur un client ou un produit. Comment ça se passe ?",
+      "options": [
+        {
+          "pts": 1,
+          "text": "Je demande à un collègue ou je fouille dans plusieurs fichiers. Chaque service a ses propres infos."
+        },
+        {
+          "pts": 2,
+          "text": "Je trouve l'info, mais parfois elle diffère selon les sources. Je ne sais pas laquelle est la bonne."
+        },
+        {
+          "pts": 3,
+          "text": "Je sais où chercher. L'information est à jour et c'est la même pour tout le monde."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "text": "Comment sont mises à jour vos données importantes (stocks, clients, tarifs…) ?",
+      "options": [
+        {
+          "pts": 1,
+          "text": "Quand on y pense, ou quand on découvre que c'est faux. Certaines infos datent de plusieurs années."
+        },
+        {
+          "pts": 2,
+          "text": "On fait des campagnes de \"nettoyage\" de temps en temps, quand ça devient vraiment problématique."
+        },
+        {
+          "pts": 3,
+          "text": "Il y a un processus régulier. On sait qui met à jour quoi, et à quelle fréquence."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "text": "Vous avez besoin d'un nouveau rapport ou d'une nouvelle donnée. Comment ça se passe ?",
+      "options": [
+        {
+          "pts": 1,
+          "text": "Je me débrouille seul avec Excel. Demander prend trop de temps ou personne ne comprend mon besoin."
+        },
+        {
+          "pts": 2,
+          "text": "Je fais une demande, mais c'est long et le résultat ne correspond pas toujours à ce que je voulais."
+        },
+        {
+          "pts": 3,
+          "text": "J'exprime mon besoin métier, on travaille ensemble pour y répondre. Chacun apporte son expertise."
+        }
+      ]
+    }
+  ],
+  "profiles": {
+    "survie": {
+      "label": "Mode Survie",
+      "subtitle": "\"Je me débrouille\"",
+      "min": 5,
+      "max": 8,
+      "color": "#ef4444",
+      "bg": "rgba(239,68,68,.15)",
+      "border": "#ef4444",
+      "desc": "Vous passez du temps à chercher, vérifier, recopier. Chacun a ses propres fichiers. Quand il y a une erreur, on ne sait pas trop qui doit la corriger.",
+      "next": "Identifiez une donnée qui vous fait perdre du temps chaque semaine. Proposez à votre équipe de clarifier : « C'est quoi la bonne source ? Qui la tient à jour ? »"
+    },
+    "pompier": {
+      "label": "Mode Pompier",
+      "subtitle": "\"On fait avec\"",
+      "min": 9,
+      "max": 12,
+      "color": "#f59e0b",
+      "bg": "rgba(245,158,11,.15)",
+      "border": "#f59e0b",
+      "desc": "Des outils existent, mais vous corrigez souvent les problèmes après coup. Quand vous avez besoin d'aide, vous ne savez pas toujours à qui vous adresser.",
+      "next": "Clarifiez qui est responsable de quoi. Pour vos données critiques, identifiez un « propriétaire » côté métier qui garantit la qualité, et un interlocuteur technique qui garantit l'accès."
+    },
+    "pilotage": {
+      "label": "Mode Pilotage",
+      "subtitle": "\"On pilote\"",
+      "min": 13,
+      "max": 15,
+      "color": "#10b981",
+      "bg": "rgba(16,185,129,.15)",
+      "border": "#10b981",
+      "desc": "Vos données sont fiables et accessibles. Vous savez qui contacter. Métier et technique travaillent main dans la main.",
+      "next": "Traitez vos données comme un produit : avec un cycle de vie (création, mise à jour, archivage), des « clients » internes qui l'utilisent, et des engagements de qualité."
+    }
+  },
+  "companyField": {
+    "visible": true,
+    "label": "Nom de votre entreprise",
+    "placeholder": "",
+    "required": false
+  }
+}

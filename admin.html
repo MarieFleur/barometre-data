@@ -10,6 +10,7 @@
       --bg:       #0f172a;
       --surface:  #1e293b;
       --s2:       #2d3f55;
+      --s3:       #1a2840;
       --primary:  #6366f1;
       --text:     #e2e8f0;
       --muted:    #94a3b8;
@@ -26,7 +27,9 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding: 32px 20px;
+      padding: 32px 20px 64px;
+      max-width: 900px;
+      margin: 0 auto;
     }
 
     .header {
@@ -37,7 +40,6 @@
       gap: 16px;
       margin-bottom: 32px;
     }
-
     .header-left { display: flex; align-items: center; gap: 14px; }
     .logo {
       width: 44px; height: 44px;
@@ -45,6 +47,7 @@
       border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
       font-size: 20px;
+      overflow: hidden;
     }
     h1 { font-size: 1.4rem; font-weight: 700; }
     .admin-tag {
@@ -56,10 +59,7 @@
     }
 
     /* Live indicator */
-    .live {
-      display: flex; align-items: center; gap: 8px;
-      font-size: .85rem; color: var(--muted);
-    }
+    .live { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); }
     .live-dot {
       width: 8px; height: 8px;
       background: var(--pilotage); border-radius: 50%;
@@ -69,7 +69,6 @@
 
     /* Grid */
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
-
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -80,7 +79,7 @@
     .stat-value { font-size: 2.4rem; font-weight: 900; line-height: 1; }
     .stat-sub   { font-size: .82rem; color: var(--muted); margin-top: 4px; }
 
-    /* Chart card */
+    /* Card */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -89,6 +88,7 @@
       margin-bottom: 24px;
     }
     .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 20px; }
+    .card-subtitle { font-size: .85rem; color: var(--muted); margin-top: -14px; margin-bottom: 20px; }
     .chart-wrap { position: relative; height: 260px; }
 
     /* Profiles */
@@ -102,8 +102,47 @@
     .profile-name  { font-size: .85rem; font-weight: 600; margin-bottom: 2px; }
     .profile-pct   { font-size: .78rem; opacity: .7; }
 
-    /* Reset button */
-    .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    /* Buttons */
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: .92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+    }
+    .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--survie);
+      border: 1px solid rgba(239,68,68,.4);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-danger:hover { background: rgba(239,68,68,.12); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: .88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
     .btn-reset {
       background: #ef4444;
       color: #fff;
@@ -118,6 +157,25 @@
     .btn-reset:hover { background: #dc2626; transform: translateY(-1px); }
     .btn-reset:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
+    .btn-add {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(99,102,241,.12);
+      color: var(--primary);
+      border: 1px dashed rgba(99,102,241,.4);
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      justify-content: center;
+      transition: background .2s;
+    }
+    .btn-add:hover { background: rgba(99,102,241,.2); }
+
+    /* Toast */
     .toast {
       display: none;
       align-items: center;
@@ -131,12 +189,218 @@
     }
     .toast.show { display: flex; }
 
-    /* Scores list */
-    .scores-list {
+    /* Actions row */
+    .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+    /* ── Question editor ─────────────────────────────────────────────────── */
+    .question-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; }
+
+    .question-item {
+      background: var(--s3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .question-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .question-header:hover { background: rgba(255,255,255,.03); }
+
+    .q-num {
+      min-width: 28px;
+      height: 28px;
+      background: rgba(99,102,241,.2);
+      color: var(--primary);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .78rem;
+      font-weight: 800;
+    }
+    .q-preview {
+      flex: 1;
+      font-size: .88rem;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .q-chevron {
+      color: var(--muted);
+      font-size: .75rem;
+      transition: transform .2s;
+    }
+    .question-item.open .q-chevron { transform: rotate(180deg); }
+
+    .question-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--border);
+    }
+    .question-item.open .question-body { display: block; }
+
+    .field-label {
+      font-size: .74rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      font-weight: 700;
+      margin: 16px 0 6px;
+    }
+
+    .field-input, .field-textarea {
+      width: 100%;
+      background: var(--s2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: .9rem;
+      padding: 10px 14px;
+      font-family: inherit;
+      transition: border-color .2s;
+      resize: vertical;
+    }
+    .field-input:focus, .field-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .field-textarea { min-height: 72px; line-height: 1.5; }
+
+    .options-editor { display: flex; flex-direction: column; gap: 10px; }
+
+    .option-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: start;
+      background: var(--s2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .opt-pts-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .opt-pts-label { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .opt-pts-input {
+      width: 52px;
+      text-align: center;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--primary);
+      font-size: .95rem;
+      font-weight: 700;
+      padding: 6px 4px;
+      font-family: inherit;
+    }
+    .opt-pts-input:focus { outline: none; border-color: var(--primary); }
+
+    .opt-text-input {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: .88rem;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 52px;
+      line-height: 1.5;
+      padding-top: 4px;
+      width: 100%;
+    }
+    .opt-text-input:focus { outline: none; }
+
+    .opt-del-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px;
+      border-radius: 4px;
+      transition: color .2s;
+      margin-top: 2px;
+    }
+    .opt-del-btn:hover { color: var(--survie); }
+
+    .question-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Profile threshold editor ──────────────────────────────────────── */
+    .profiles-editor { display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; }
+
+    .profile-editor-row {
+      border-radius: 12px;
+      padding: 18px;
+      border-width: 1px;
+      border-style: solid;
+    }
+
+    .profile-editor-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .profile-editor-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    .profile-editor-name { font-weight: 700; font-size: .95rem; }
+
+    .profile-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .profile-fields-wide { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+
+    .threshold-group { display: flex; align-items: center; gap: 8px; }
+    .threshold-input {
+      width: 70px;
+      text-align: center;
+      background: var(--s2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 8px;
+      font-family: inherit;
+    }
+    .threshold-input:focus { outline: none; border-color: var(--primary); }
+    .threshold-sep { color: var(--muted); font-size: .9rem; }
+
+    .range-preview {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 4px;
+      margin-top: 14px;
     }
+    .range-badge {
+      font-size: .75rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+
+    /* ── Save bar ────────────────────────────────────────────────────────── */
+    .save-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* Scores list */
+    .scores-list { display: flex; flex-wrap: wrap; gap: 8px; }
     .score-chip {
       background: var(--s2);
       border-radius: 8px;
@@ -147,6 +411,8 @@
 
     @media (max-width: 560px) {
       .profiles { grid-template-columns: 1fr; }
+      .profile-fields { grid-template-columns: 1fr; }
+      .option-row { grid-template-columns: auto 1fr auto; }
     }
   </style>
 </head>
@@ -176,12 +442,12 @@
   <div class="stat-card">
     <div class="stat-label">Score moyen</div>
     <div class="stat-value" id="kpi-avg">—</div>
-    <div class="stat-sub">points / 15</div>
+    <div class="stat-sub" id="kpi-avg-sub">points</div>
   </div>
   <div class="stat-card">
     <div class="stat-label">Score médian</div>
     <div class="stat-value" id="kpi-median">—</div>
-    <div class="stat-sub">points / 15</div>
+    <div class="stat-sub" id="kpi-median-sub">points</div>
   </div>
 </div>
 
@@ -189,18 +455,18 @@
 <div class="profiles">
   <div class="profile-card" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3)">
     <div class="profile-count" id="cnt-survie"   style="color:var(--survie)">0</div>
-    <div class="profile-name"  style="color:var(--survie)">Mode Survie</div>
-    <div class="profile-pct"   id="pct-survie">5 – 8 pts</div>
+    <div class="profile-name"  style="color:var(--survie)" id="label-survie">Mode Survie</div>
+    <div class="profile-pct"   id="pct-survie">—</div>
   </div>
   <div class="profile-card" style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3)">
     <div class="profile-count" id="cnt-pompier"  style="color:var(--pompier)">0</div>
-    <div class="profile-name"  style="color:var(--pompier)">Mode Pompier</div>
-    <div class="profile-pct"   id="pct-pompier">9 – 12 pts</div>
+    <div class="profile-name"  style="color:var(--pompier)" id="label-pompier">Mode Pompier</div>
+    <div class="profile-pct"   id="pct-pompier">—</div>
   </div>
   <div class="profile-card" style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3)">
     <div class="profile-count" id="cnt-pilotage" style="color:var(--pilotage)">0</div>
-    <div class="profile-name"  style="color:var(--pilotage)">Mode Pilotage</div>
-    <div class="profile-pct"   id="pct-pilotage">13 – 15 pts</div>
+    <div class="profile-name"  style="color:var(--pilotage)" id="label-pilotage">Mode Pilotage</div>
+    <div class="profile-pct"   id="pct-pilotage">—</div>
   </div>
 </div>
 
@@ -212,37 +478,133 @@
   </div>
 </div>
 
-<!-- Actions -->
+<!-- ═══ 1. GESTION DES QUESTIONS ═════════════════════════════════════════ -->
+<div class="card">
+  <div class="card-title">Gestion des questions</div>
+  <p class="card-subtitle">Modifier le texte, les réponses et leur contribution au score.</p>
+
+  <!-- Champ entreprise -->
+  <div id="company-field-row" style="
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--s3); border:1px solid var(--border);
+    border-radius:12px; padding:14px 18px; margin-bottom:16px; gap:12px;
+  ">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="
+        min-width:28px;height:28px;background:rgba(99,102,241,.2);
+        color:var(--primary);border-radius:6px;
+        display:flex;align-items:center;justify-content:center;
+        font-size:.78rem;font-weight:800;
+      ">🏢</div>
+      <div>
+        <div style="font-size:.88rem;font-weight:600;" id="company-field-label">Nom de l'entreprise</div>
+        <div style="font-size:.76rem;color:var(--muted);" id="company-field-status">Masqué du quiz</div>
+      </div>
+    </div>
+    <button onclick="toggleCompanyField()" id="company-field-btn"
+      style="background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px 10px;border-radius:6px;color:#94a3b8;"
+      title="Afficher / masquer">🚫</button>
+  </div>
+
+  <div class="question-list" id="question-list"></div>
+
+  <button class="btn-add" onclick="addQuestion()">+ Ajouter une question</button>
+
+  <div style="height:20px"></div>
+  <div class="save-bar">
+    <div class="toast" id="toast-questions">✅ Questions sauvegardées.</div>
+    <button class="btn-primary" onclick="saveQuestions()">Sauvegarder les questions</button>
+  </div>
+</div>
+
+<!-- ═══ 2. PROFILS DE MATURITÉ ═══════════════════════════════════════════ -->
+<div class="card">
+  <div class="card-title">Profils de maturité</div>
+  <p class="card-subtitle">Définir les seuils de score, les descriptions et les conseils pour chaque niveau.</p>
+
+  <div class="profiles-editor" id="profiles-editor"></div>
+
+  <div class="save-bar">
+    <div class="toast" id="toast-profiles">✅ Profils sauvegardés.</div>
+    <button class="btn-primary" onclick="saveProfiles()">Sauvegarder les profils</button>
+  </div>
+</div>
+
+<!-- ═══ 3. ACTIONS ═══════════════════════════════════════════════════════ -->
 <div class="card">
   <div class="card-title">Actions</div>
   <div class="actions">
     <button class="btn-reset" id="btn-reset" onclick="resetData()">
       🔄 Remettre à zéro
     </button>
-    <div class="toast" id="toast">✅ Données réinitialisées avec succès.</div>
+    <div class="toast" id="toast-reset">✅ Données réinitialisées avec succès.</div>
   </div>
 </div>
 
 <script>
 let chart = null;
 let allScores = [];
+let config = null;  // loaded from /config
 
-/* ── Chart ───────────────────────────────── */
-function barColor(score) {
-  if (score <= 8)  return 'rgba(239,68,68,0.75)';
-  if (score <= 12) return 'rgba(245,158,11,0.75)';
-  return 'rgba(16,185,129,0.75)';
+/* ══════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════ */
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
-function initChart() {
+function profileColor(key) {
+  return { survie: '#ef4444', pompier: '#f59e0b', pilotage: '#10b981' }[key] || '#6366f1';
+}
+function profileBg(key) {
+  return {
+    survie:   'rgba(239,68,68,.08)',
+    pompier:  'rgba(245,158,11,.08)',
+    pilotage: 'rgba(16,185,129,.08)',
+  }[key] || 'rgba(99,102,241,.08)';
+}
+function profileBorder(key) {
+  return {
+    survie:   'rgba(239,68,68,.3)',
+    pompier:  'rgba(245,158,11,.3)',
+    pilotage: 'rgba(16,185,129,.3)',
+  }[key] || 'rgba(99,102,241,.3)';
+}
+
+function barColor(score) {
+  const p = config ? config.profiles : null;
+  if (!p) return 'rgba(99,102,241,0.75)';
+  if (score >= p.survie.min   && score <= p.survie.max)   return 'rgba(239,68,68,0.75)';
+  if (score >= p.pompier.min  && score <= p.pompier.max)  return 'rgba(245,158,11,0.75)';
+  if (score >= p.pilotage.min && score <= p.pilotage.max) return 'rgba(16,185,129,0.75)';
+  return 'rgba(99,102,241,0.75)';
+}
+
+function showToast(id) {
+  const el = document.getElementById(id);
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+/* ══════════════════════════════════════════════
+   CHART
+══════════════════════════════════════════════ */
+function initChart(scoreMin, scoreMax) {
   const ctx = document.getElementById('chart').getContext('2d');
-  const labels = Array.from({length: 11}, (_, i) => String(i + 5));
+  const labels = [];
+  for (let i = scoreMin; i <= scoreMax; i++) labels.push(String(i));
+
+  if (chart) chart.destroy();
   chart = new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
       datasets: [{
-        data: new Array(11).fill(0),
+        data: new Array(labels.length).fill(0),
         backgroundColor: labels.map(l => barColor(+l)),
         borderRadius: 6,
       }],
@@ -263,7 +625,7 @@ function initChart() {
         x: {
           grid:  { color: 'rgba(255,255,255,0.05)' },
           ticks: { color: '#94a3b8' },
-          title: { display: true, text: 'Score / 15', color: '#64748b', font: { size: 11 } },
+          title: { display: true, text: `Score / ${scoreMax}`, color: '#64748b', font: { size: 11 } },
         },
         y: {
           grid:  { color: 'rgba(255,255,255,0.05)' },
@@ -276,7 +638,9 @@ function initChart() {
   });
 }
 
-/* ── Update UI ───────────────────────────── */
+/* ══════════════════════════════════════════════
+   STATS UI
+══════════════════════════════════════════════ */
 function median(arr) {
   if (!arr.length) return null;
   const s = [...arr].sort((a, b) => a - b);
@@ -285,13 +649,16 @@ function median(arr) {
 }
 
 function updateUI(stats) {
-  document.getElementById('kpi-total').textContent  = stats.total || '—';
-  document.getElementById('kpi-avg').textContent    = stats.average ?? '—';
+  const scoreMax = stats.scoreMax || 15;
+  document.getElementById('kpi-total').textContent    = stats.total || '—';
+  document.getElementById('kpi-avg').textContent      = stats.average ?? '—';
+  document.getElementById('kpi-avg-sub').textContent  = `points / ${scoreMax}`;
+  document.getElementById('kpi-median-sub').textContent = `points / ${scoreMax}`;
 
-  // Reconstituer la liste des scores pour la médiane
   allScores = [];
-  for (let i = 5; i <= 15; i++) {
-    for (let j = 0; j < (stats.distribution[i] || 0); j++) allScores.push(i);
+  const dist = stats.distribution || {};
+  for (const [score, count] of Object.entries(dist)) {
+    for (let j = 0; j < count; j++) allScores.push(+score);
   }
   document.getElementById('kpi-median').textContent = median(allScores) ?? '—';
 
@@ -301,46 +668,360 @@ function updateUI(stats) {
   document.getElementById('cnt-pilotage').textContent = stats.profiles.pilotage;
 
   const pct = n => total ? `${Math.round(n / total * 100)} %` : '—';
-  document.getElementById('pct-survie').textContent   = `${pct(stats.profiles.survie)}  ·  5 – 8 pts`;
-  document.getElementById('pct-pompier').textContent  = `${pct(stats.profiles.pompier)}  ·  9 – 12 pts`;
-  document.getElementById('pct-pilotage').textContent = `${pct(stats.profiles.pilotage)}  ·  13 – 15 pts`;
+  const p = config ? config.profiles : null;
+
+  document.getElementById('pct-survie').textContent =
+    `${pct(stats.profiles.survie)}  ·  ${p ? `${p.survie.min} – ${p.survie.max} pts` : '—'}`;
+  document.getElementById('pct-pompier').textContent =
+    `${pct(stats.profiles.pompier)}  ·  ${p ? `${p.pompier.min} – ${p.pompier.max} pts` : '—'}`;
+  document.getElementById('pct-pilotage').textContent =
+    `${pct(stats.profiles.pilotage)}  ·  ${p ? `${p.pilotage.min} – ${p.pilotage.max} pts` : '—'}`;
+
+  if (p) {
+    document.getElementById('label-survie').textContent   = p.survie.label;
+    document.getElementById('label-pompier').textContent  = p.pompier.label;
+    document.getElementById('label-pilotage').textContent = p.pilotage.label;
+  }
 
   if (chart) {
-    chart.data.datasets[0].data = Array.from({length: 11}, (_, i) => stats.distribution[i + 5] || 0);
+    const scoreMin = stats.scoreMin || 5;
+    const labels = [];
+    for (let i = scoreMin; i <= scoreMax; i++) labels.push(String(i));
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = labels.map(l => dist[l] || 0);
+    chart.data.datasets[0].backgroundColor = labels.map(l => barColor(+l));
     chart.update('active');
   }
 }
 
-/* ── Reset ───────────────────────────────── */
+/* ══════════════════════════════════════════════
+   RESET
+══════════════════════════════════════════════ */
 async function resetData() {
   const btn = document.getElementById('btn-reset');
   if (!confirm('Remettre toutes les réponses à zéro ?')) return;
-
-  btn.disabled = true;
-  btn.textContent = '…';
+  btn.disabled = true; btn.textContent = '…';
   try {
     await fetch('/reset', { method: 'POST' });
-    const toast = document.getElementById('toast');
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
-  } catch (e) {
-    alert('Erreur lors de la remise à zéro.');
-  }
+    showToast('toast-reset');
+  } catch (e) { alert('Erreur lors de la remise à zéro.'); }
   btn.disabled = false;
   btn.textContent = '🔄 Remettre à zéro';
 }
 
-/* ── SSE ─────────────────────────────────── */
+/* ══════════════════════════════════════════════
+   QUESTION EDITOR
+══════════════════════════════════════════════ */
+function renderQuestions() {
+  const list = document.getElementById('question-list');
+  list.innerHTML = '';
+  config.questions.forEach((q, qi) => renderQuestionItem(q, qi, list));
+}
+
+function renderQuestionItem(q, qi, container) {
+  const item = document.createElement('div');
+  item.className = 'question-item';
+  item.dataset.id = qi;
+
+  const isVisible = q.visible !== false;
+  item.innerHTML = `
+    <div class="question-header" onclick="toggleQuestion(${qi})">
+      <div class="q-num" style="opacity:${isVisible ? 1 : 0.4}">${qi + 1}</div>
+      <div class="q-preview" style="opacity:${isVisible ? 1 : 0.4}">${esc(q.text) || 'Nouvelle question…'}</div>
+      <button class="q-vis-btn" title="${isVisible ? 'Masquer du quiz' : 'Afficher dans le quiz'}"
+        onclick="event.stopPropagation();toggleVisibility(${qi})"
+        style="background:none;border:none;cursor:pointer;font-size:1rem;padding:4px 8px;border-radius:6px;color:${isVisible ? '#10b981' : '#94a3b8'}">
+        ${isVisible ? '👁' : '🚫'}
+      </button>
+      <div class="q-chevron">▼</div>
+    </div>
+    <div class="question-body">
+      <div class="field-label">Texte de la question</div>
+      <textarea class="field-textarea" id="q-text-${qi}" rows="2"
+        oninput="updateQPreview(${qi})">${esc(q.text)}</textarea>
+
+      <div class="field-label" style="margin-top:18px;">Réponses et contribution au score</div>
+      <div class="options-editor" id="opts-${qi}">
+        ${q.options.map((opt, oi) => renderOptionHTML(qi, oi, opt)).join('')}
+      </div>
+      <button class="btn-ghost" style="margin-top:10px;font-size:.82rem;padding:8px 16px"
+        onclick="addOption(${qi})">+ Ajouter une réponse</button>
+
+      <div class="question-footer">
+        <button class="btn-danger" onclick="deleteQuestion(${qi})">Supprimer cette question</button>
+      </div>
+    </div>
+  `;
+  container.appendChild(item);
+}
+
+function renderOptionHTML(qi, oi, opt) {
+  return `
+    <div class="option-row" id="opt-row-${qi}-${oi}">
+      <div class="opt-pts-wrap">
+        <div class="opt-pts-label">pts</div>
+        <input class="opt-pts-input" type="number" min="0" max="99"
+          value="${opt.pts}" id="opt-pts-${qi}-${oi}" />
+      </div>
+      <textarea class="opt-text-input" id="opt-text-${qi}-${oi}"
+        placeholder="Texte de la réponse…">${esc(opt.text)}</textarea>
+      <button class="opt-del-btn" onclick="deleteOption(${qi},${oi})" title="Supprimer">✕</button>
+    </div>
+  `;
+}
+
+function toggleQuestion(qi) {
+  const item = document.querySelector(`.question-item[data-id="${qi}"]`);
+  if (item) item.classList.toggle('open');
+}
+
+function updateQPreview(qi) {
+  const val = document.getElementById(`q-text-${qi}`).value;
+  const preview = document.querySelector(`.question-item[data-id="${qi}"] .q-preview`);
+  if (preview) preview.textContent = val || 'Nouvelle question…';
+}
+
+function addQuestion() {
+  const newQ = {
+    id: Date.now(),
+    text: '',
+    options: [
+      { pts: 1, text: '' },
+      { pts: 2, text: '' },
+      { pts: 3, text: '' },
+    ],
+  };
+  config.questions.push(newQ);
+  const qi = config.questions.length - 1;
+  const list = document.getElementById('question-list');
+  renderQuestionItem(newQ, qi, list);
+  // Open it immediately
+  setTimeout(() => {
+    const item = document.querySelector(`.question-item[data-id="${qi}"]`);
+    if (item) item.classList.add('open');
+    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 50);
+}
+
+function toggleVisibility(qi) {
+  config.questions[qi].visible = config.questions[qi].visible === false ? true : false;
+  renderQuestions();
+}
+
+function renderCompanyField() {
+  if (!config.companyField) config.companyField = { visible: false, label: 'Nom de votre entreprise', placeholder: '', required: false };
+  const on = config.companyField.visible;
+  const btn = document.getElementById('company-field-btn');
+  const status = document.getElementById('company-field-status');
+  if (btn)    { btn.textContent = on ? '👁' : '🚫'; btn.style.color = on ? '#10b981' : '#94a3b8'; btn.title = on ? 'Masquer du quiz' : 'Afficher dans le quiz'; }
+  if (status) status.textContent = on ? 'Visible dans le quiz' : 'Masqué du quiz';
+}
+
+async function toggleCompanyField() {
+  if (!config.companyField) config.companyField = { visible: false, label: 'Nom de votre entreprise', placeholder: '', required: false };
+  config.companyField.visible = !config.companyField.visible;
+  renderCompanyField();
+  await saveConfig();
+}
+
+function deleteQuestion(qi) {
+  if (!confirm('Supprimer cette question ?')) return;
+  config.questions.splice(qi, 1);
+  renderQuestions();
+}
+
+function addOption(qi) {
+  const container = document.getElementById(`opts-${qi}`);
+  const oi = container.children.length;
+  config.questions[qi].options.push({ pts: oi + 1, text: '' });
+  const div = document.createElement('div');
+  div.innerHTML = renderOptionHTML(qi, oi, { pts: oi + 1, text: '' });
+  container.appendChild(div.firstElementChild);
+}
+
+function deleteOption(qi, oi) {
+  const row = document.getElementById(`opt-row-${qi}-${oi}`);
+  if (row) row.remove();
+  // Re-index remaining rows
+  const container = document.getElementById(`opts-${qi}`);
+  Array.from(container.children).forEach((row, i) => {
+    row.id = `opt-row-${qi}-${i}`;
+    const pts = row.querySelector('.opt-pts-input');
+    const txt = row.querySelector('.opt-text-input');
+    const btn = row.querySelector('.opt-del-btn');
+    if (pts) pts.id = `opt-pts-${qi}-${i}`;
+    if (txt) txt.id = `opt-text-${qi}-${i}`;
+    if (btn) btn.setAttribute('onclick', `deleteOption(${qi},${i})`);
+  });
+}
+
+function collectQuestions() {
+  return config.questions.map((q, qi) => {
+    const text = document.getElementById(`q-text-${qi}`)?.value ?? q.text;
+    const optsContainer = document.getElementById(`opts-${qi}`);
+    const options = [];
+    if (optsContainer) {
+      Array.from(optsContainer.children).forEach((row, oi) => {
+        const pts = parseInt(document.getElementById(`opt-pts-${qi}-${oi}`)?.value, 10) || 1;
+        const txt = document.getElementById(`opt-text-${qi}-${oi}`)?.value ?? '';
+        options.push({ pts, text: txt });
+      });
+    } else {
+      options.push(...q.options);
+    }
+    return { id: q.id, text, options };
+  });
+}
+
+async function saveQuestions() {
+  config.questions = collectQuestions();
+  const ok = await saveConfig();
+  if (ok) showToast('toast-questions');
+}
+
+/* ══════════════════════════════════════════════
+   PROFILE EDITOR
+══════════════════════════════════════════════ */
+const PROFILE_KEYS = ['survie', 'pompier', 'pilotage'];
+
+function renderProfiles() {
+  const editor = document.getElementById('profiles-editor');
+  editor.innerHTML = '';
+  PROFILE_KEYS.forEach(key => {
+    const p = config.profiles[key];
+    const color = profileColor(key);
+    const row = document.createElement('div');
+    row.className = 'profile-editor-row';
+    row.style.background = profileBg(key);
+    row.style.borderColor = profileBorder(key);
+    row.innerHTML = `
+      <div class="profile-editor-header">
+        <div class="profile-editor-dot" style="background:${color}"></div>
+        <div class="profile-editor-name" style="color:${color}">${esc(p.label)}</div>
+      </div>
+
+      <div class="profile-fields">
+        <div>
+          <div class="field-label">Nom du niveau</div>
+          <input class="field-input" id="p-label-${key}" value="${esc(p.label)}" />
+        </div>
+        <div>
+          <div class="field-label">Sous-titre</div>
+          <input class="field-input" id="p-subtitle-${key}" value="${esc(p.subtitle)}" />
+        </div>
+        <div>
+          <div class="field-label">Score minimum</div>
+          <input class="threshold-input" type="number" min="0" max="999"
+            id="p-min-${key}" value="${p.min}" oninput="refreshRangePreview()" />
+        </div>
+        <div>
+          <div class="field-label">Score maximum</div>
+          <input class="threshold-input" type="number" min="0" max="999"
+            id="p-max-${key}" value="${p.max}" oninput="refreshRangePreview()" />
+        </div>
+      </div>
+
+      <div class="profile-fields-wide">
+        <div>
+          <div class="field-label">Description affichée au participant</div>
+          <textarea class="field-textarea" id="p-desc-${key}" rows="3">${esc(p.desc)}</textarea>
+        </div>
+        <div>
+          <div class="field-label">Conseil "Par où commencer"</div>
+          <textarea class="field-textarea" id="p-next-${key}" rows="3">${esc(p.next)}</textarea>
+        </div>
+      </div>
+    `;
+    editor.appendChild(row);
+  });
+  refreshRangePreview();
+}
+
+function refreshRangePreview() {
+  // Just validate overlaps visually — highlight inputs if ranges collide
+  // (simple UX feedback, not blocking)
+  PROFILE_KEYS.forEach(key => {
+    const minEl = document.getElementById(`p-min-${key}`);
+    const maxEl = document.getElementById(`p-max-${key}`);
+    if (!minEl || !maxEl) return;
+    const min = parseInt(minEl.value, 10);
+    const max = parseInt(maxEl.value, 10);
+    const invalid = isNaN(min) || isNaN(max) || min > max;
+    minEl.style.borderColor = invalid ? 'var(--survie)' : '';
+    maxEl.style.borderColor = invalid ? 'var(--survie)' : '';
+  });
+}
+
+function collectProfiles() {
+  const profiles = {};
+  PROFILE_KEYS.forEach(key => {
+    const base = config.profiles[key];
+    profiles[key] = {
+      ...base,
+      label:    document.getElementById(`p-label-${key}`)?.value    ?? base.label,
+      subtitle: document.getElementById(`p-subtitle-${key}`)?.value ?? base.subtitle,
+      min:      parseInt(document.getElementById(`p-min-${key}`)?.value, 10)  ?? base.min,
+      max:      parseInt(document.getElementById(`p-max-${key}`)?.value, 10)  ?? base.max,
+      desc:     document.getElementById(`p-desc-${key}`)?.value     ?? base.desc,
+      next:     document.getElementById(`p-next-${key}`)?.value     ?? base.next,
+    };
+  });
+  return profiles;
+}
+
+async function saveProfiles() {
+  config.profiles = collectProfiles();
+  const ok = await saveConfig();
+  if (ok) {
+    showToast('toast-profiles');
+    renderProfiles();
+  }
+}
+
+/* ══════════════════════════════════════════════
+   SAVE CONFIG TO SERVER
+══════════════════════════════════════════════ */
+async function saveConfig() {
+  try {
+    const res = await fetch('/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    });
+    return res.ok;
+  } catch (e) {
+    alert('Erreur lors de la sauvegarde.');
+    return false;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   SSE
+══════════════════════════════════════════════ */
 function connect() {
   const sse = new EventSource('/events');
   sse.onmessage = e => { try { updateUI(JSON.parse(e.data)); } catch (_) {} };
   sse.onerror   = () => setTimeout(connect, 3000);
 }
 
-/* ── Init ────────────────────────────────── */
-initChart();
-fetch('/stats').then(r => r.json()).then(updateUI);
-connect();
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
+async function init() {
+  config = await fetch('/config').then(r => r.json());
+  const stats = await fetch('/stats').then(r => r.json());
+
+  const scoreMin = stats.scoreMin ?? 5;
+  const scoreMax = stats.scoreMax ?? 15;
+  initChart(scoreMin, scoreMax);
+  updateUI(stats);
+  renderQuestions();
+  renderCompanyField();
+  renderProfiles();
+  connect();
+}
+
+init();
 </script>
 </body>
 </html>

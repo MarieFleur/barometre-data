@@ -405,7 +405,27 @@
         ⏱&nbsp; 2 minutes · Résultats en temps réel · Anonyme
       </div>
 
-      <button class="btn-primary" onclick="startQuiz()">
+      <div id="company-field-wrap" style="display:none; margin-bottom:20px;">
+        <label id="company-field-label" style="
+          display:block; font-size:.82rem; font-weight:700;
+          text-transform:uppercase; letter-spacing:1.5px;
+          color:var(--muted); margin-bottom:8px;
+        ">Nom de votre entreprise</label>
+        <input id="company-input" type="text"
+          placeholder="Ex : Dupont &amp; Associés"
+          style="
+            width:100%; background:var(--surface-2);
+            border:1px solid var(--border); border-radius:10px;
+            color:var(--text); font-size:.95rem; padding:13px 16px;
+            font-family:inherit; outline:none;
+            transition:border-color .2s;
+          "
+          onfocus="this.style.borderColor='var(--primary)'"
+          onblur="this.style.borderColor='var(--border)'"
+        />
+      </div>
+
+      <button class="btn-primary" id="btn-start" onclick="startQuiz()">
         Commencer &nbsp;→
       </button>
     </div>
@@ -513,86 +533,17 @@
 
 <script>
 /* ══════════════════════════════════════════════
-   DONNÉES DU QUESTIONNAIRE
+   DONNÉES DU QUESTIONNAIRE (chargées depuis /config)
 ══════════════════════════════════════════════ */
-const QUESTIONS = [
-  {
-    text: "Vous devez prendre une décision importante. Que faites-vous ?",
-    options: [
-      { pts: 1, text: "Je refais mes propres calculs. Je ne me fie pas aux chiffres qu'on me donne." },
-      { pts: 2, text: "Je consulte les chiffres disponibles, mais je sais qu'il faudra les vérifier." },
-      { pts: 3, text: "Je consulte le tableau de bord et je décide. Les chiffres reflètent la réalité." },
-    ],
-  },
-  {
-    text: "Vous découvrez une erreur dans les données. Que se passe-t-il ?",
-    options: [
-      { pts: 1, text: "Je corrige dans mon fichier. Personne ne sait vraiment à qui signaler le problème." },
-      { pts: 2, text: "J'envoie un mail à l'informatique. C'est eux qui gèrent les données." },
-      { pts: 3, text: "Je sais qui contacter côté métier. La correction est faite à la source pour tout le monde." },
-    ],
-  },
-  {
-    text: "Vous cherchez une information sur un client ou un produit. Comment ça se passe ?",
-    options: [
-      { pts: 1, text: "Je demande à un collègue ou je fouille dans plusieurs fichiers. Chaque service a ses propres infos." },
-      { pts: 2, text: "Je trouve l'info, mais parfois elle diffère selon les sources. Je ne sais pas laquelle est la bonne." },
-      { pts: 3, text: "Je sais où chercher. L'information est à jour et c'est la même pour tout le monde." },
-    ],
-  },
-  {
-    text: "Comment sont mises à jour vos données importantes (stocks, clients, tarifs…) ?",
-    options: [
-      { pts: 1, text: "Quand on y pense, ou quand on découvre que c'est faux. Certaines infos datent de plusieurs années." },
-      { pts: 2, text: "On fait des campagnes de \"nettoyage\" de temps en temps, quand ça devient vraiment problématique." },
-      { pts: 3, text: "Il y a un processus régulier. On sait qui met à jour quoi, et à quelle fréquence." },
-    ],
-  },
-  {
-    text: "Vous avez besoin d'un nouveau rapport ou d'une nouvelle donnée. Comment ça se passe ?",
-    options: [
-      { pts: 1, text: "Je me débrouille seul avec Excel. Demander prend trop de temps ou personne ne comprend mon besoin." },
-      { pts: 2, text: "Je fais une demande, mais c'est long et le résultat ne correspond pas toujours à ce que je voulais." },
-      { pts: 3, text: "J'exprime mon besoin métier, on travaille ensemble pour y répondre. Chacun apporte son expertise." },
-    ],
-  },
-];
-
-const PROFILES = {
-  survie: {
-    label:    "Mode Survie",
-    subtitle: '"Je me débrouille"',
-    bg:       "rgba(239,68,68,.15)",
-    border:   "#ef4444",
-    color:    "#ef4444",
-    desc:     "Vous passez du temps à chercher, vérifier, recopier. Chacun a ses propres fichiers. Quand il y a une erreur, on ne sait pas trop qui doit la corriger.",
-    next:     "Identifiez une donnée qui vous fait perdre du temps chaque semaine. Proposez à votre équipe de clarifier : « C'est quoi la bonne source ? Qui la tient à jour ? »",
-  },
-  pompier: {
-    label:    "Mode Pompier",
-    subtitle: '"On fait avec"',
-    bg:       "rgba(245,158,11,.15)",
-    border:   "#f59e0b",
-    color:    "#f59e0b",
-    desc:     "Des outils existent, mais vous corrigez souvent les problèmes après coup. Quand vous avez besoin d'aide, vous ne savez pas toujours à qui vous adresser.",
-    next:     "Clarifiez qui est responsable de quoi. Pour vos données critiques, identifiez un « propriétaire » côté métier qui garantit la qualité, et un interlocuteur technique qui garantit l'accès.",
-  },
-  pilotage: {
-    label:    "Mode Pilotage",
-    subtitle: '"On pilote"',
-    bg:       "rgba(16,185,129,.15)",
-    border:   "#10b981",
-    color:    "#10b981",
-    desc:     "Vos données sont fiables et accessibles. Vous savez qui contacter. Métier et technique travaillent main dans la main.",
-    next:     "Traitez vos données comme un produit : avec un cycle de vie (création, mise à jour, archivage), des « clients » internes qui l'utilisent, et des engagements de qualité.",
-  },
-};
+let QUESTIONS = [];
+let PROFILES  = {};
+let SCORE_MAX = 15;
 
 /* ══════════════════════════════════════════════
    ÉTAT
 ══════════════════════════════════════════════ */
 let currentQ  = 0;
-let answers   = new Array(QUESTIONS.length).fill(null);
+let answers   = [];
 let userScore = null;
 let chart     = null;
 let sse       = null;
@@ -610,6 +561,14 @@ function startQuiz() {
   answers  = new Array(QUESTIONS.length).fill(null);
   renderQ();
   showScreen('screen-questions');
+}
+
+function getProfile(score) {
+  for (const [key, p] of Object.entries(PROFILES)) {
+    if (score >= p.min && score <= p.max) return p;
+  }
+  // fallback: return the profile with the closest max
+  return Object.values(PROFILES).at(-1);
 }
 
 function renderQ() {
@@ -687,12 +646,6 @@ async function submitQuiz() {
 /* ══════════════════════════════════════════════
    RÉSULTATS
 ══════════════════════════════════════════════ */
-function getProfile(score) {
-  if (score <= 8)  return PROFILES.survie;
-  if (score <= 12) return PROFILES.pompier;
-  return PROFILES.pilotage;
-}
-
 function showResults(score, stats) {
   animateScore(score);
   document.getElementById('badge-score').textContent = score;
@@ -864,6 +817,46 @@ function connectSSE() {
 }
 
 window.addEventListener('beforeunload', () => { if (sse) sse.close(); });
+
+/* ══════════════════════════════════════════════
+   INIT — charge la config avant tout
+══════════════════════════════════════════════ */
+async function init() {
+  try {
+    const cfg = await fetch('/config').then(r => r.json());
+    QUESTIONS = cfg.questions.filter(q => q.visible !== false);
+    PROFILES  = cfg.profiles;
+    SCORE_MAX = QUESTIONS.reduce((s, q) => s + Math.max(...q.options.map(o => o.pts)), 0);
+
+    // Champ entreprise
+    const cf = cfg.companyField;
+    if (cf && cf.visible) {
+      const wrap  = document.getElementById('company-field-wrap');
+      const label = document.getElementById('company-field-label');
+      const input = document.getElementById('company-input');
+      if (wrap)  wrap.style.display = 'block';
+      if (label && cf.label)       label.textContent    = cf.label;
+      if (input && cf.placeholder) input.placeholder    = cf.placeholder;
+    }
+
+    // Mettre à jour le dénominateur affiché dans les résultats
+    document.querySelector('.score-denom').textContent = ` /${SCORE_MAX}`;
+
+    // Mettre à jour la légende du graphique avec les vrais seuils
+    const p = PROFILES;
+    const legends = document.querySelectorAll('.legend-item');
+    if (legends[0]) legends[0].querySelector('div + *') && (legends[0].lastChild.textContent =
+      ` ${p.survie?.label || 'Mode Survie'} (${p.survie?.min}–${p.survie?.max})`);
+    if (legends[1]) legends[1].lastChild.textContent =
+      ` ${p.pompier?.label || 'Mode Pompier'} (${p.pompier?.min}–${p.pompier?.max})`;
+    if (legends[2]) legends[2].lastChild.textContent =
+      ` ${p.pilotage?.label || 'Mode Pilotage'} (${p.pilotage?.min}–${p.pilotage?.max})`;
+  } catch (e) {
+    console.error('Impossible de charger la configuration', e);
+  }
+}
+
+init();
 </script>
 </body>
 </html>
